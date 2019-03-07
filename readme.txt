@@ -1,1 +1,1 @@
-这是一个学习Router的练习Demo项目，实现思路及方式参照了ARouter
+这是一个学习Router的练习Demo项目（Activity路由），实现思路及方式参照了ARouter
