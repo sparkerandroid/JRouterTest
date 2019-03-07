@@ -1,5 +1,8 @@
 package com.json.router.annotation.meta;
 
 public enum TypeEnum {
-    ACTIVITY
+    DEFAULT,
+    ACTIVITY,
+    FRAGMENT,
+    FRAGMENTV4
 }

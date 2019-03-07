@@ -4,6 +4,10 @@ public class Const {
 
     public static final String ACTIVITY = "android.app.Activity";
 
+    public static final String FRAGMENT_V4 = "android.support.v4.app.Fragment";
+
+    public static final String FRAGMENT = "android.app.Fragment";
+
     public static final String ANNOTATION_PACKAGE = "com.json.router.annotation";
 
     public static final String ROUTE_META = "RouteMeta";
@@ -17,4 +21,6 @@ public class Const {
     public static final String IROUTEGROUP = "IRouteGroup";
 
     public static final String ROUTE_FILE_DIRECTORY_NAME = "com.jrouter.routes";
+
+    public static final String WARN = "AUTO GENERATED, MODIFY IS USELESS";
 }

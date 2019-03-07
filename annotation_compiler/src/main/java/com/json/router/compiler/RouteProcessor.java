@@ -13,6 +13,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.lang.reflect.ParameterizedType;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -29,6 +30,7 @@ import javax.annotation.processing.SupportedOptions;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
@@ -38,14 +40,17 @@ import javax.tools.Diagnostic;
 
 @AutoService(Processor.class)
 @SupportedOptions({Const.MODULE_NAME})
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
-@SupportedAnnotationTypes({Const.ANNOTATION_PACKAGE + Const.ROUTE_META})
 public class RouteProcessor extends AbstractProcessor {
 
     private Messager log;
     private Elements elements;
     private Types types;
     private Filer filer;
+
+    private TypeMirror typeMirror_Activity;
+    private TypeMirror typeMirror_Fragment_V4;
+    private TypeMirror typeMirror_Fragment;
+
     private String moduleName;
 
     private Map<String, Set<RouteMeta>> group;//路由分组
@@ -58,16 +63,31 @@ public class RouteProcessor extends AbstractProcessor {
         elements = processingEnvironment.getElementUtils();
         types = processingEnvironment.getTypeUtils();
         filer = processingEnvironment.getFiler();
+
+        typeMirror_Activity = elements.getTypeElement(Const.ACTIVITY).asType();
+        typeMirror_Fragment_V4 = elements.getTypeElement(Const.FRAGMENT_V4).asType();
+        typeMirror_Fragment = elements.getTypeElement(Const.FRAGMENT).asType();
+
         Map<String, String> options = processingEnvironment.getOptions();
         if (options != null && !options.isEmpty()) {
             moduleName = options.get(Const.MODULE_NAME);
         }
         if (moduleName == null || moduleName.length() == 0) {
-            log.printMessage(Diagnostic.Kind.ERROR, "moduleName can't be null or empty");
+            log.printMessage(Diagnostic.Kind.NOTE, "moduleName can't be null or empty");
             throw new RuntimeException("moduleName can't be null or empty");
         }
         group = new HashMap<>();
         entry = new HashMap<>();
+    }
+
+    @Override
+    public SourceVersion getSupportedSourceVersion() {
+        return SourceVersion.latestSupported();
+    }
+
+    @Override
+    public Set<String> getSupportedAnnotationTypes() {
+        return Collections.singleton(Route.class.getCanonicalName());
     }
 
     @Override
@@ -82,18 +102,14 @@ public class RouteProcessor extends AbstractProcessor {
             return false;
         }
 
-        TypeElement type_activity = elements.getTypeElement(Const.ACTIVITY);
-
-        TypeMirror typeMirror_activity = type_activity.asType();
-
-        log.printMessage(Diagnostic.Kind.ERROR, "start to classify route info");
+        log.printMessage(Diagnostic.Kind.NOTE, "start to classify route info");
         for (Element ele : routeElements) { //遍历&路由分组
             TypeMirror anno_ele = ele.asType();
-            if (types.isSubtype(typeMirror_activity, anno_ele)) {// 是Activity的子类
-                Route route = anno_ele.getAnnotation(Route.class);
+            if (ele.getKind() == ElementKind.CLASS) {// Route注解只能使用在Class类上，如interface等类型不可使用
+                Route route = ele.getAnnotation(Route.class);
                 String path = route.path();//获取路由
                 String groupName = extractGroupFromPath(path);//提取分组
-                RouteMeta routeMeta = new RouteMeta(path, groupName, ele, TypeEnum.ACTIVITY);//封装路由信息
+                RouteMeta routeMeta = new RouteMeta(path, groupName, ele, getElementKind(anno_ele));//封装路由信息
                 Set<RouteMeta> groupRoutes = group.get(groupName);
                 if (groupRoutes == null) {
                     groupRoutes = new HashSet<>();
@@ -104,8 +120,8 @@ public class RouteProcessor extends AbstractProcessor {
                 }
             }
         }
-        log.printMessage(Diagnostic.Kind.ERROR, "classify route info  -- finish -- group size is " + group.size());
-        log.printMessage(Diagnostic.Kind.ERROR, "start to generate route group file");
+        log.printMessage(Diagnostic.Kind.NOTE, "classify route info  -- finish -- group size is " + group.size());
+        log.printMessage(Diagnostic.Kind.NOTE, "start to generate route group file");
         // 生成路由表文件
         if (group == null || group.size() == 0) {//无路由表信息
             return false;
@@ -119,32 +135,39 @@ public class RouteProcessor extends AbstractProcessor {
 
         //2、生成参数：routes
         ParameterSpec parameterSpec = ParameterSpec.builder(parameterizedTypeName,
-                "routes",
-                Modifier.PUBLIC)
+                "routes")
                 .build();
 
         //3、遍历路由分组（Map<String, Set<RouteMeta>> group），生成路由表文件
         // String是分组名，每一个Set<RouteMeta>都是一个路由表文件
+        //------------------------------------------------------------
+        //public class app_Group_main implements IRouteGroup {
+        //  public void loadRouteInfo(Map<String, RouteMeta> routes) {
+        //    routes.put("/main/mainactivity",RouteMeta.build("/main/mainactivity","main",MainActivity.class,TypeEnum.ACTIVITY));
+        //  }
+        //}
         for (Map.Entry<String, Set<RouteMeta>> routeEntry : group.entrySet()) {
             String groupName = routeEntry.getKey();
             MethodSpec.Builder methodSpec = MethodSpec.methodBuilder(Const.LOAD_ROUTE_INFO)
                     .addModifiers(Modifier.PUBLIC)
                     .addParameter(parameterSpec);
+
             for (RouteMeta routeMeta : routeEntry.getValue()) {//遍历&添加统一分组下的路由信息
                 // routes.put("/main/mainactivity", RouteMeta.build(path, group, destination, rawType, type))
-                methodSpec.addStatement("routes.put($S,$T.build($S,$S,$S.class," + routeMeta.getRawType() + "," + routeMeta.getType() + ",)",
+                methodSpec.addStatement("routes.put($S,$T.build($S,$S,$T.class,$T." + routeMeta.getType() + "))",
                         routeMeta.getPath(),
                         ClassName.get(RouteMeta.class),
                         routeMeta.getPath(),
                         routeMeta.getGroup(),
-                        ClassName.get(routeMeta.getRawType().asType())
-                );
+                        ClassName.get(routeMeta.getRawType().asType()),
+                        ClassName.get(TypeEnum.class));
             }
             //路由文件名
             String groupFileName = moduleName + "_Group_" + groupName;
             TypeSpec typeSpec = TypeSpec.classBuilder(groupFileName)
                     .addSuperinterface(ClassName.get(Const.TEMPLATE, Const.IROUTEGROUP))
                     .addModifiers(Modifier.PUBLIC)
+                    .addJavadoc(Const.WARN)
                     .addMethod(methodSpec.build())
                     .build();
 
@@ -152,15 +175,22 @@ public class RouteProcessor extends AbstractProcessor {
             try {
                 javaFile.writeTo(filer);
             } catch (Exception e) {
-                log.printMessage(Diagnostic.Kind.ERROR, "generate route group file exception");
+                log.printMessage(Diagnostic.Kind.NOTE, "generate route group file exception");
             }
 
             if (entry == null) {
                 entry = new HashMap<>();
             }
             entry.put(groupName, groupFileName);//保存生成的路由文件信息，作为之后的查找入口
-
         }
+
+        //4、生成路由入口文件:void loadRouteEntry(Map<String, Class<? extends IRouteGroup>> entries);
+        //4.1、生成参数类型
+//        ParameterizedTypeName parameterizedTypeName1 = ParameterizedTypeName.get(
+//                ClassName.get(Map.class),
+//
+//                );
+
         return true;
     }
 
@@ -172,5 +202,17 @@ public class RouteProcessor extends AbstractProcessor {
         // 截取group
         String groupName = path.substring(1, path.indexOf("/", 1));
         return TextUtil.isEmpty(groupName) ? "" : groupName;
+    }
+
+    // 获取被注解的元素的类型
+    private TypeEnum getElementKind(TypeMirror typeMirror) {
+        if (types.isSubtype(typeMirror, typeMirror_Activity)) {
+            return TypeEnum.ACTIVITY;
+        } else if (types.isSubtype(typeMirror, typeMirror_Fragment)) {
+            return TypeEnum.FRAGMENT;
+        } else if (types.isSubtype(typeMirror, typeMirror_Fragment_V4)) {
+            return TypeEnum.FRAGMENTV4;
+        }
+        return TypeEnum.DEFAULT;
     }
 }

@@ -17,17 +17,16 @@ public class RouteMeta {
         this.type = type;
     }
 
-    public RouteMeta(String path, String group, Class<?> destination, Element rawType, TypeEnum type) {
+    public RouteMeta(String path, String group, Class<?> destination, TypeEnum type) {
         this.path = path;
         this.group = group;
         this.destination = destination;
-        this.rawType = rawType;
         this.type = type;
     }
 
 
-    public RouteMeta build(String path, String group, Class<?> destination, Element rawType, TypeEnum type) {
-        return new RouteMeta(path, group, destination, rawType, type);
+    public static RouteMeta build(String path, String group, Class<?> destination, TypeEnum type) {
+        return new RouteMeta(path, group, destination, type);
     }
 
     public String getPath() {
