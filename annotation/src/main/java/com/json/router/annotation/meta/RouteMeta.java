@@ -10,6 +10,8 @@ public class RouteMeta {
     private Element rawType;//编译时注解的元素 - 即被注解的元素：class
     private TypeEnum type;//注解的目标类的类型，比如avtivity，fragment等
 
+    public RouteMeta(){}
+
     public RouteMeta(String path, String group, Element rawType, TypeEnum type) {
         this.path = path;
         this.group = group;
