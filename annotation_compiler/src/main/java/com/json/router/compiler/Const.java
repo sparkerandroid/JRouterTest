@@ -20,7 +20,11 @@ public class Const {
 
     public static final String IROUTEGROUP = "IRouteGroup";
 
+    public static final String IENTRY = "IEntry";
+
     public static final String ROUTE_FILE_DIRECTORY_NAME = "com.jrouter.routes";
 
-    public static final String WARN = "AUTO GENERATED, MODIFY IS USELESS";
+    public static final String WARN = "AUTO GENERATED, MODIFY IS USELESS @WRITE BY JSON";
+
+    public static final String LOADROUTEENTRY = "loadRouteEntry";
 }

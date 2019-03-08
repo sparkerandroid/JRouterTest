@@ -11,8 +11,11 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
+import com.squareup.javapoet.WildcardTypeName;
 
-import java.lang.reflect.ParameterizedType;
+import org.checkerframework.checker.units.qual.C;
+
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,9 +28,7 @@ import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
-import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.annotation.processing.SupportedOptions;
-import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -54,7 +55,7 @@ public class RouteProcessor extends AbstractProcessor {
     private String moduleName;
 
     private Map<String, Set<RouteMeta>> group;//路由分组
-    private Map<String, String> entry;//路由入口
+    private Map<String, String> entries;//路由入口
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnvironment) {
@@ -77,7 +78,7 @@ public class RouteProcessor extends AbstractProcessor {
             throw new RuntimeException("moduleName can't be null or empty");
         }
         group = new HashMap<>();
-        entry = new HashMap<>();
+        entries = new HashMap<>();
     }
 
     @Override
@@ -93,23 +94,41 @@ public class RouteProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
         if (set == null || set.isEmpty()) {
-            log.printMessage(Diagnostic.Kind.ERROR, "process set is empty");
+            log.printMessage(Diagnostic.Kind.NOTE, "process set is empty");
             return false;
         }
         Set<? extends Element> routeElements = roundEnvironment.getElementsAnnotatedWith(Route.class);
         if (routeElements == null || routeElements.isEmpty()) {
-            log.printMessage(Diagnostic.Kind.ERROR, "process roundEnvironment is empty");
+            log.printMessage(Diagnostic.Kind.NOTE, "process roundEnvironment is empty");
             return false;
         }
 
+        extractAndGroupRouteInfo(routeElements);    //提取&分组路由信息
+
+        // 生成路由表文件
+        if (group == null || group.size() == 0) {//无路由表信息
+            return false;
+        }
+        generateRouteGroupFile();
+
+        //生成路由入口文件
+        if (entries == null || entries.size() <= 0) {
+            return false;
+        }
+        generateRouteEntryFile();
+        return true;
+    }
+
+    //提取&分组路由信息
+    private void extractAndGroupRouteInfo(Set<? extends Element> routeElements) {
         log.printMessage(Diagnostic.Kind.NOTE, "start to classify route info");
         for (Element ele : routeElements) { //遍历&路由分组
-            TypeMirror anno_ele = ele.asType();
+            TypeMirror annoEle = ele.asType();
             if (ele.getKind() == ElementKind.CLASS) {// Route注解只能使用在Class类上，如interface等类型不可使用
                 Route route = ele.getAnnotation(Route.class);
                 String path = route.path();//获取路由
                 String groupName = extractGroupFromPath(path);//提取分组
-                RouteMeta routeMeta = new RouteMeta(path, groupName, ele, getElementKind(anno_ele));//封装路由信息
+                RouteMeta routeMeta = new RouteMeta(path, groupName, ele, getElementKind(annoEle));//封装路由信息
                 Set<RouteMeta> groupRoutes = group.get(groupName);
                 if (groupRoutes == null) {
                     groupRoutes = new HashSet<>();
@@ -122,10 +141,10 @@ public class RouteProcessor extends AbstractProcessor {
         }
         log.printMessage(Diagnostic.Kind.NOTE, "classify route info  -- finish -- group size is " + group.size());
         log.printMessage(Diagnostic.Kind.NOTE, "start to generate route group file");
-        // 生成路由表文件
-        if (group == null || group.size() == 0) {//无路由表信息
-            return false;
-        }
+    }
+
+    //生成路由表文件
+    private void generateRouteGroupFile() {
         //1、生成参数类型:Map<String, RouteMeta>
         ParameterizedTypeName parameterizedTypeName = ParameterizedTypeName.get(
                 ClassName.get(Map.class),
@@ -175,23 +194,59 @@ public class RouteProcessor extends AbstractProcessor {
             try {
                 javaFile.writeTo(filer);
             } catch (Exception e) {
-                log.printMessage(Diagnostic.Kind.NOTE, "generate route group file exception");
+                log.printMessage(Diagnostic.Kind.ERROR, "generate route group file exception");
             }
 
-            if (entry == null) {
-                entry = new HashMap<>();
+            if (entries == null) {
+                entries = new HashMap<>();
             }
-            entry.put(groupName, groupFileName);//保存生成的路由文件信息，作为之后的查找入口
+            entries.put(groupName, groupFileName);//保存生成的路由文件信息，作为之后的查找入口
         }
+    }
 
+    //生成路由入口文件
+    private void generateRouteEntryFile() {
         //4、生成路由入口文件:void loadRouteEntry(Map<String, Class<? extends IRouteGroup>> entries);
         //4.1、生成参数类型
-//        ParameterizedTypeName parameterizedTypeName1 = ParameterizedTypeName.get(
-//                ClassName.get(Map.class),
-//
-//                );
+        ParameterizedTypeName parameterizedTypeName1 = ParameterizedTypeName.get(
+                ClassName.get(Map.class),
+                ClassName.get(String.class),
+                ParameterizedTypeName.get(
+                        ClassName.get(Class.class),
+                        WildcardTypeName.subtypeOf(ClassName.get(Const.TEMPLATE, Const.IROUTEGROUP))
+                )
+        );
+        //4.2、生成参数
+        ParameterSpec parameterSpec1 = ParameterSpec.builder(parameterizedTypeName1, "entries").build();
 
-        return true;
+        //4.3、生成方法
+        MethodSpec.Builder methodSpec = MethodSpec.methodBuilder(Const.LOADROUTEENTRY)
+                .addModifiers(Modifier.PUBLIC)
+                .addParameter(parameterSpec1);
+
+        for (Map.Entry<String, String> entry : entries.entrySet()) {
+            //entries.put("main", JRouterTest_Group_main.class);
+            methodSpec.addStatement("entries.put($S,$T.class)",
+                    entry.getKey(),
+                    ClassName.get(Const.ROUTE_FILE_DIRECTORY_NAME, entry.getValue()));
+        }
+        // 4.5、生成入口文件
+        TypeSpec typeSpec = TypeSpec.classBuilder(moduleName + "_entry")
+                .addMethod(methodSpec.build())
+                .addModifiers(Modifier.PUBLIC)
+                .addJavadoc(Const.WARN)
+                .addSuperinterface(ClassName.get(Const.TEMPLATE, Const.IENTRY))
+                .build();
+
+        JavaFile javaFile = JavaFile.builder(Const.ROUTE_FILE_DIRECTORY_NAME, typeSpec)
+                .build();
+
+        try {
+            javaFile.writeTo(filer);
+        } catch (Exception e) {
+            log.printMessage(Diagnostic.Kind.ERROR, "generate route entry file exception");
+            e.printStackTrace();
+        }
     }
 
     // 从路由中提取分组名
