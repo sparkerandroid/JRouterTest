@@ -1,4 +1,4 @@
-package com.json.router.compiler;
+package com.json.router.annotation_api;
 
 public class Const {
 
@@ -22,13 +22,15 @@ public class Const {
 
     public static final String IENTRY = "IEntry";
 
-    public static final String ENTRY = "Entry";
-
     public static final String ROUTE_FILE_DIRECTORY_NAME = "com.jrouter.routes";
 
     public static final String WARN = "AUTO GENERATED, MODIFY IS USELESS @WRITE BY JSON";
 
     public static final String LOADROUTEENTRY = "loadRouteEntry";
+
+    public static final String ENTRY = "Entry";
+
+    public static final String GROUP = "group";
 
     public static final String JROUTER = "JRouter";
 

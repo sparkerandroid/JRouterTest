@@ -231,7 +231,8 @@ public class RouteProcessor extends AbstractProcessor {
                     ClassName.get(Const.ROUTE_FILE_DIRECTORY_NAME, entry.getValue()));
         }
         // 4.5、生成入口文件
-        TypeSpec typeSpec = TypeSpec.classBuilder(moduleName + "_entry")
+
+        TypeSpec typeSpec = TypeSpec.classBuilder(Const.JROUTER + Const.SEPELATOR + Const.ENTRY + Const.SEPELATOR + moduleName)
                 .addMethod(methodSpec.build())
                 .addModifiers(Modifier.PUBLIC)
                 .addJavadoc(Const.WARN)
