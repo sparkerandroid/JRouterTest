@@ -1,1 +1,1 @@
-include ':app', ':annotation', ':annotation_compiler', ':annotation_api'
+include ':app', ':annotation', ':annotation_compiler', ':annotation_api', ':moduletest'

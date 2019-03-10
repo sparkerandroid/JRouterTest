@@ -8,6 +8,8 @@ public class Const {
 
     public static final String FRAGMENT = "android.app.Fragment";
 
+    public static final String ISERVICE = "com.json.router.annotation_api.template.IService";
+
     public static final String ANNOTATION_PACKAGE = "com.json.router.annotation";
 
     public static final String ROUTE_META = "RouteMeta";

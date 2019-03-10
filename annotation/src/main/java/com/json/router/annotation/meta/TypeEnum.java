@@ -4,5 +4,6 @@ public enum TypeEnum {
     DEFAULT,
     ACTIVITY,
     FRAGMENT,
-    FRAGMENTV4
+    FRAGMENTV4,
+    ISERVICE
 }

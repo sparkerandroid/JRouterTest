@@ -2,6 +2,7 @@ package com.json.router.annotation_api;
 
 import com.json.router.annotation.meta.RouteMeta;
 import com.json.router.annotation_api.template.IRouteGroup;
+import com.json.router.annotation_api.template.IService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,8 +14,11 @@ public class WareHouse {
 
     public Map<String, RouteMeta> routes;
 
+    public Map<Class, IService> services;
+
     public WareHouse() {
         entries = new HashMap<>();
         routes = new HashMap<>();
+        services = new HashMap<>();
     }
 }

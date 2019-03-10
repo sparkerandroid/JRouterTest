@@ -1,0 +1,6 @@
+ext {
+    isModule = true
+    app = [
+            "module1": "com.json.router.module"
+    ]
+}

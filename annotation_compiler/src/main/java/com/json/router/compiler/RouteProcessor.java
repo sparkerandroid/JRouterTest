@@ -13,9 +13,6 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.WildcardTypeName;
 
-import org.checkerframework.checker.units.qual.C;
-
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,6 +48,7 @@ public class RouteProcessor extends AbstractProcessor {
     private TypeMirror typeMirror_Activity;
     private TypeMirror typeMirror_Fragment_V4;
     private TypeMirror typeMirror_Fragment;
+    private TypeMirror typeMirror_Service;
 
     private String moduleName;
 
@@ -68,6 +66,7 @@ public class RouteProcessor extends AbstractProcessor {
         typeMirror_Activity = elements.getTypeElement(Const.ACTIVITY).asType();
         typeMirror_Fragment_V4 = elements.getTypeElement(Const.FRAGMENT_V4).asType();
         typeMirror_Fragment = elements.getTypeElement(Const.FRAGMENT).asType();
+        typeMirror_Service = elements.getTypeElement(Const.ISERVICE).asType();
 
         Map<String, String> options = processingEnvironment.getOptions();
         if (options != null && !options.isEmpty()) {
@@ -268,6 +267,9 @@ public class RouteProcessor extends AbstractProcessor {
             return TypeEnum.FRAGMENT;
         } else if (types.isSubtype(typeMirror, typeMirror_Fragment_V4)) {
             return TypeEnum.FRAGMENTV4;
+        }
+        if (types.isSubtype(typeMirror, typeMirror_Service)) {
+            return TypeEnum.ISERVICE;
         }
         return TypeEnum.DEFAULT;
     }

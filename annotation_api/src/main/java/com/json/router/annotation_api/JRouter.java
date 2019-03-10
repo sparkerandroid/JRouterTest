@@ -7,6 +7,7 @@ import com.json.router.annotation.meta.RouteMeta;
 import com.json.router.annotation_api.loadutil.ClassUtils;
 import com.json.router.annotation_api.template.IEntry;
 import com.json.router.annotation_api.template.IRouteGroup;
+import com.json.router.annotation_api.template.IService;
 
 import java.util.Set;
 
@@ -79,6 +80,21 @@ public class JRouter {
             if (routeMeta != null) {
                 routeParamBuilder.setDestination(routeMeta.getDestination());
                 routeParamBuilder.setType(routeMeta.getType());
+                switch (routeMeta.getType()) {
+                    case ISERVICE:
+                        Class<?> destination = routeMeta.getDestination();
+                        IService service = wareHouse.services.get(destination);
+                        if (null == service) {
+                            try {
+                                service = (IService) destination.getConstructor().newInstance();
+                                wareHouse.services.put(destination, service);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        routeParamBuilder.setService(service);
+                        break;
+                }
             }
             return routeParamBuilder;
         }

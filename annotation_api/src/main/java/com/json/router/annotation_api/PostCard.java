@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import com.json.router.annotation.meta.TypeEnum;
+import com.json.router.annotation_api.template.IService;
 
 public class PostCard {
 
@@ -12,6 +13,8 @@ public class PostCard {
     private String group;
     private Class<?> destination;
     private TypeEnum type;
+
+    private IService service;
 
     private int requestCode;
     private Bundle extra;
@@ -24,6 +27,7 @@ public class PostCard {
             this.destination = builder.destination;
             this.extra = builder.extra;
             this.type = builder.type;
+            this.service = builder.service;
         }
     }
 
@@ -42,9 +46,15 @@ public class PostCard {
         private String group;
         private Class<?> destination;
         private TypeEnum type;
+        private IService service;
 
         private int requestCode;
         private Bundle extra;
+
+        public Builder setService(IService service) {
+            this.service = service;
+            return this;
+        }
 
         public Builder setPath(String path) {
             this.path = path;
@@ -84,15 +94,18 @@ public class PostCard {
 
     }
 
-    public void navigation(Activity activity) {
+    public Object navigation(Activity activity) {
         if (activity != null) {
             switch (type) {
                 case ACTIVITY:
                     Intent intent = new Intent(activity, destination);
                     activity.startActivity(intent);
                     break;
+                case ISERVICE:
+                    return service;
             }
         }
+        return null;
     }
 
 }
