@@ -8,7 +8,7 @@ public class Const {
 
     public static final String FRAGMENT = "android.app.Fragment";
 
-    public static final String ISERVICE = "com.json.router.annotation_api.template.IService";
+    public static final String ISERVICE = "com.json.router.annotation.template.IService";
 
     public static final String ANNOTATION_PACKAGE = "com.json.router.annotation";
 
@@ -18,7 +18,7 @@ public class Const {
 
     public static final String LOAD_ROUTE_INFO = "loadRouteInfo";
 
-    public static final String TEMPLATE = "com.json.router.annotation_api.template";
+    public static final String TEMPLATE = "com.json.router.annotation.template";
 
     public static final String IROUTEGROUP = "IRouteGroup";
 

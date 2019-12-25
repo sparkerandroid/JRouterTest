@@ -4,10 +4,11 @@ import android.app.Application;
 import android.util.Log;
 
 import com.json.router.annotation.meta.RouteMeta;
+import com.json.router.annotation.util.TextUtil;
 import com.json.router.annotation_api.loadutil.ClassUtils;
-import com.json.router.annotation_api.template.IEntry;
-import com.json.router.annotation_api.template.IRouteGroup;
-import com.json.router.annotation_api.template.IService;
+import com.json.router.annotation.template.IEntry;
+import com.json.router.annotation.template.IRouteGroup;
+import com.json.router.annotation.template.IService;
 
 import java.util.Set;
 

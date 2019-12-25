@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.widget.Toast;
 
 import com.json.router.annotation.Route;
-import com.json.router.annotation_api.template.IService;
+import com.json.router.annotation.template.IService;
 
 @Route(path = "/module/myservice")
 public class MyService implements IService {

@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import com.json.router.annotation.meta.TypeEnum;
-import com.json.router.annotation_api.template.IService;
+import com.json.router.annotation.template.IService;
 
 public class PostCard {
 

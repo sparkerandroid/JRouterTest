@@ -1,4 +1,4 @@
-package com.json.router.annotation_api.template;
+package com.json.router.annotation.template;
 
 import com.json.router.annotation.meta.RouteMeta;
 

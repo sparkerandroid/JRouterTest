@@ -4,7 +4,7 @@ import com.google.auto.service.AutoService;
 import com.json.router.annotation.Route;
 import com.json.router.annotation.meta.RouteMeta;
 import com.json.router.annotation.meta.TypeEnum;
-import com.json.router.compiler.util.TextUtil;
+import com.json.router.annotation.util.TextUtil;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
@@ -35,6 +35,8 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
+
+//TODO 这就是为什么必须是Java项目的原因，因为在安卓工程中引用不到AbstractProcessor
 
 @AutoService(Processor.class)
 @SupportedOptions({Const.MODULE_NAME})

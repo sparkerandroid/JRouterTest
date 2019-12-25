@@ -1,8 +1,8 @@
 package com.json.router.annotation_api;
 
 import com.json.router.annotation.meta.RouteMeta;
-import com.json.router.annotation_api.template.IRouteGroup;
-import com.json.router.annotation_api.template.IService;
+import com.json.router.annotation.template.IRouteGroup;
+import com.json.router.annotation.template.IService;
 
 import java.util.HashMap;
 import java.util.Map;

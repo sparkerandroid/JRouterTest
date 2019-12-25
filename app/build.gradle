@@ -31,6 +31,7 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    //TODO 因为app是主项目，只有添加如下依赖，才能打包到apk中
     implementation project(':annotation')
     annotationProcessor project(':annotation_compiler')
     implementation project(':annotation_api')

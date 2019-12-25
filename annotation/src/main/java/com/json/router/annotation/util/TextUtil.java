@@ -1,4 +1,4 @@
-package com.json.router.compiler.util;
+package com.json.router.annotation.util;
 
 public class TextUtil {
     public static boolean isEmpty(String str) {
